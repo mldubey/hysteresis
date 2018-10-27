@@ -18,25 +18,61 @@ class HysteresisNetwork:
         self.beta = beta;
         self.output    = np.zeros(self.layers.shape)
     
-    def updatestate(self):
+    def updatestate(self,x_input):
         int_input = np.dot(self.weights, self.layers)  ### TODO: Replace with Thomas's Matrix Mutliply
-        input = self.ext_input + int_input
+        input = x_input + int_input
         d_layers = (-1 * self.layers) + sigmoid(input,self.lam,self.beta)
         self.layers = self.layers + d_layers * self.timestep
         self.output = self.layers
 
 
-## 1's are perfect integrators
+## W = 1's are perfect integrators
 ## <1 is a leaky integrator
 ## >1 is a switch
+
+
 ## Specify the desired params here
 
-W = np.array([0.5])
-V = np.array([1])
+W = np.array([2])
+V = np.array([0])
 
 lam = 4;
 beta = 0.5;
-timestep = 0.01
+timestep = .1
+
+# Input changing over time, response follows
+
+t = [0] * 100
+
+ext_input = [0] * 30
+ext_input.extend([1]*40)
+ext_input.extend([0.5]*30)
+output = [0] * 100
+
+hn = HysteresisNetwork(W,V,lam,beta,timestep,ext_input)
+
+for m in range(1,100,1):
+    t[m] = m
+    x_input = ext_input[m]
+    hn.updatestate(x_input)
+    output[m] = hn.output
+
+# plot output
+#plt.ion
+
+plt.figure(0)
+plt.plot(t, ext_input)
+plt.plot(t, output)
+plt.axis([0,100,0,1])
+plt.xlabel('Time')
+plt.ylabel('Output Level (V)')
+plt.title('Time Response Curve')
+
+
+
+
+#######
+# Loop over all ext_input for hysteresis plot
 
 itr = 0
 
@@ -44,21 +80,22 @@ ext_input = [0] * 201
 output = [0] * 201
 
 for m in range(-100,100,1):
-    
+
     itr = itr + 1
     ext_input[itr] = float(m) / 100;
     hn = HysteresisNetwork(W,V,lam,beta,timestep,ext_input[itr])
-    
+    x_input = ext_input[itr]
+
     for i in range(1000):
-      hn.updatestate()
-    
+        hn.updatestate(x_input)
+
     output[itr] = hn.output
 
-    print(hn.output)
 
 
 # plot output
-plt.ion
+#plt.ion
+plt.figure(1)
 plt.plot(ext_input, output)
 plt.axis([-1,1,0,1])
 plt.xlabel('External Input Level')
@@ -66,3 +103,8 @@ plt.ylabel('Output Level (V)')
 plt.title('Network Response Curve')
 
 plt.show()
+
+
+
+
+
